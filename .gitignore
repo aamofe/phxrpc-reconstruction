@@ -1,0 +1,51 @@
+# 编译产物
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+*.dll
+*.out
+search_main
+search_tool_main
+search_tool
+*_tool
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+env/
+.venv/
+
+# 日志
+*.log
+
+# 临时配置
+*.tmp.conf
+*.tmp
+
+# 编辑器
+*~
+*.swp
+.*.sw?
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# 第三方依赖（如有本地编译）
+phxrpc/third_party/
+third_party/
+
+# 环境变量
+.env
+
+# 测试覆盖率
+.coverage
+htmlcov/
+.pytest_cache/
