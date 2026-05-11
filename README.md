@@ -8,18 +8,20 @@
 
 ## 2. 目录结构
 
-| 路径 | 说明 |
-|------|------|
-| `phxrpc/` | PhxRPC 官方 C++ 框架与 `sample/` 示例（含 `search.proto`、生成代码、`search_main` / `search_tool_main` 等） |
-| `phxrpc/sample/` | 示例服务与客户端工具；集成测试依赖此目录下已编译二进制与 `.conf` |
-| `phxrpc/codegen/` | 代码生成器（`phxrpc_pb2*`），与规则文档中的 CG-* 对应 |
-| `docs/business_rules_v2.md` | **主规格**：56 条规则（FR/BR/PR/CG）、追溯与 **覆盖度矩阵** |
-| `docs/test_scenarios_v2.md` | **主剧本**：≥30 个测试场景（TS-xx），与各规则 ID 映射 |
-| `docs/business_rules.md` / `docs/test_scenarios.md` | v1 / 演进过程中保留的早期文档（可选查阅） |
-| `tests/integration_test.py` | 原始轻量集成测试（3 个用例，保留兼容） |
-| `tests/integration_test_v2.py` | 扩展黑盒集成测试（多场景、覆盖率摘要输出） |
-| `scripts/rebuild_phxrpc.sh` | **一键**：Docker 镜像/容器、`protobuf`/`phxrpc`/`sample` 构建与服务启动 |
-| `prompts/task.md` | 与 AI 协作的任务拆解与产出要求提示词 |
+
+| 路径                                                  | 说明                                                                                         |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `phxrpc/`                                           | PhxRPC 官方 C++ 框架与 `sample/` 示例（含 `search.proto`、生成代码、`search_main` / `search_tool_main` 等） |
+| `phxrpc/sample/`                                    | 示例服务与客户端工具；集成测试依赖此目录下已编译二进制与 `.conf`                                                       |
+| `phxrpc/codegen/`                                   | 代码生成器（`phxrpc_pb2`*），与规则文档中的 CG-* 对应                                                       |
+| `docs/business_rules_v2.md`                         | **主规格**：56 条规则（FR/BR/PR/CG）、追溯与 **覆盖度矩阵**                                                  |
+| `docs/test_scenarios_v2.md`                         | **主剧本**：≥30 个测试场景（TS-xx），与各规则 ID 映射                                                        |
+| `docs/business_rules.md` / `docs/test_scenarios.md` | v1 / 演进过程中保留的早期文档（可选查阅）                                                                    |
+| `tests/integration_test.py`                         | 原始轻量集成测试（3 个用例，保留兼容）                                                                       |
+| `tests/integration_test_v2.py`                      | 扩展黑盒集成测试（多场景、覆盖率摘要输出）                                                                      |
+| `scripts/rebuild_phxrpc.sh`                         | **一键**：Docker 镜像/容器、`protobuf`/`phxrpc`/`sample` 构建与服务启动                                   |
+| `prompts/task.md`                                   | 与 AI 协作的任务拆解与产出要求提示词                                                                       |
+
 
 ---
 
@@ -27,11 +29,13 @@
 
 在**宿主机**上需要：
 
-| 依赖 | 说明 |
-|------|------|
-| **Docker** | 脚本通过容器提供 Ubuntu 18.04 一致性构建环境 |
-| **sudo** | `rebuild_phxrpc.sh` 使用 `sudo docker …` |
-| **网络**（首次构建） | 若本地无完整 `protobuf` 源码包，脚本可能触发下载 |
+
+| 依赖           | 说明                                     |
+| ------------ | -------------------------------------- |
+| **Docker**   | 脚本通过容器提供 Ubuntu 18.04 一致性构建环境          |
+| **sudo**     | `rebuild_phxrpc.sh` 使用 `sudo docker …` |
+| **网络**（首次构建） | 若本地无完整 `protobuf` 源码包，脚本可能触发下载         |
+
 
 在**容器内**（脚本会安装）：`build-essential`、`python3`、`make`、`wget`/基础工具；PhxRPC 与 sample 编译依赖由 `scripts/rebuild_phxrpc.sh` 编排。
 
@@ -161,32 +165,36 @@ OK (skipped=3, expected failures=1)
 
 ### 5.3 关于 `expected failure` 与 `skipped`
 
-| 类型 | 原因 |
-|------|------|
-| **Expected failure（1）** | 示例 `Notify` 当前实现恒返回 `-1`（文档 **BR-Notify-01 ❌**），测试用 **`@unittest.expectedFailure`** 预置「将来修复后应返回 0」，用于盯住缺口而不让整条流水线误报绿灯。 |
-| **Skipped（3）** | **FR-Caller-07 / TS-07**：需要可控的半关闭连接或专用夹具。**FR-Hsha-02 / TS-12**：队列等待丢弃与高负载相关，黑盒不稳定，需压力开关。**FR-Svc-01/02**：畸形 Protobuf body 在非白盒条件下难以便携构造。 |
+
+| 类型                      | 原因                                                                                                                                        |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Expected failure（1）** | 示例 `Notify` 当前实现恒返回 `-1`（文档 **BR-Notify-01 ❌**），测试用 `**@unittest.expectedFailure`** 预置「将来修复后应返回 0」，用于盯住缺口而不让整条流水线误报绿灯。                    |
+| **Skipped（3）**          | **FR-Caller-07 / TS-07**：需要可控的半关闭连接或专用夹具。**FR-Hsha-02 / TS-12**：队列等待丢弃与高负载相关，黑盒不稳定，需压力开关。**FR-Svc-01/02**：畸形 Protobuf body 在非白盒条件下难以便携构造。 |
+
 
 ---
 
 ## 6. 规则覆盖度
 
-本节数据摘自 [`docs/business_rules_v2.md`](docs/business_rules_v2.md) **Part G — Coverage matrix**。规则总计 **56** 条（FR 37 + BR 11 + PR 5 + CG 3）。
+本节数据摘自 `[docs/business_rules_v2.md](docs/business_rules_v2.md)` **Part G — Coverage matrix**。规则总计 **56** 条（FR 37 + BR 11 + PR 5 + CG 3）。
 
 ### 6.1 规格侧量化矩阵（加权口径）
 
 文档定义：⚠️ 计半权，覆盖率 = `(✅ + 0.5×⚠️) / (✅+⚠️+❌) × 100%`。
 
-| 范围 | 规则数 | 加权覆盖率 |
-|------|--------|------------|
-| 框架 + 配置 + 生成器（FR + PR + CG） | **45** | **100%** |
-| 示例业务 + 工具（仅 BR） | **11** | **≈ 59.1%** |
-| **合计** | **56** | **≈ 92.0%** |
+
+| 范围                          | 规则数    | 加权覆盖率       |
+| --------------------------- | ------ | ----------- |
+| 框架 + 配置 + 生成器（FR + PR + CG） | **45** | **100%**    |
+| 示例业务 + 工具（仅 BR）             | **11** | **≈ 59.1%** |
+| **合计**                      | **56** | **≈ 92.0%** |
+
 
 业务侧偏低主要来自示例中的 **占位实现**（如 `Notify`、CLI `-q`/`-m` 未贯通等），框架侧在当前分析提交上为全 ✅。
 
 ### 6.2 黑盒自动化覆盖
 
-[`tests/integration_test_v2.py`](tests/integration_test_v2.py) 运行结束会打印：**约 **24 / 56** 条规则**在黑盒层级被直接操练（参见上文「Rule coverage」摘要）。其余条目依赖白盒断言、流量捕获、 codegen 巡检或特定性能拓扑，见 [`docs/test_scenarios_v2.md`](docs/test_scenarios_v2.md) 中 STATIC / SKIP 标注。
+`[tests/integration_test_v2.py](tests/integration_test_v2.py)` 运行结束会打印：**约 24 / 56 条规则**在黑盒层级被直接操练（参见上文「Rule coverage」摘要）。其余条目依赖白盒断言、流量捕获、 codegen 巡检或特定性能拓扑，见 `[docs/test_scenarios_v2.md](docs/test_scenarios_v2.md)` 中 STATIC / SKIP 标注。
 
 ---
 
@@ -201,47 +209,47 @@ OK (skipped=3, expected failures=1)
 
 ---
 
-## 8. 实现亮点与不足
+## 8. 思考与总结
 
 **亮点**
 
-- **全链路追溯**：从 `search.proto`、生成代码到 `libphxrpc.a` 关键路径，规则带证据路径与行号锚点（见 `business_rules_v2.md`）。
-- **黑盒多模块**：集成测试同时覆盖 CLI、HTTP、临时 conf、TCP 可达性等，与 FR-Dispatch / FR-CfgCli / FR-Net / FR-HTTP / PR-Cli 及多条 BR 对齐。
-- **可演进基线**：`expectedFailure` 明确标记业务缺口（Notify），避免「全绿但未实现」的假象。
+1. 覆盖深度：梳理了PhxRPC核心代码，能针对框架级规则去做测试。
+2. 覆盖广度：测试涵盖了不同维度，包括正常回显、Search 固定数据、Notify 已知失败、临时改配置模拟超时、无效 IP、HTTP 发错路径等。
+3. 可复现性强：只需要通过Docker一键执行。
 
 **不足**
 
-- **部分 FR**（如无重试、Normal_Closed、HSHA 队列丢弃、Svc 打包错误路径）仍需白盒单元测试或专项夹具。
-- **CG-/队列/监控**等规则当前以 STATIC 或未自动化为主。
-- **性能与稳定性敏感**场景未默认纳入 CI，以免 flaky。
+1. 部分框架规则没能用黑盒方式验证。
+2. 代码生成器（CG类规则）没有自动化测试。
+
+
+
+**高ROI的补充和替代思路**  
+目前采用的主要是：传统的静态分析+和黑盒集成测试。但仍有更优的方式，主要是以下几个方向：
+
+1. 变异测试：用工具对已有测试用例做微小改动，看测试能够发现。
+2. 流量回放：抓取真实请求，脱敏后在测试环境重放。
+3. 模糊测试：对RPC的URI、超时参数等做随机变异，看框架是否崩溃或者返回异常错误码。
 
 ---
 
-## 9. 高 ROI 的补充与替代思路
+## 9. 验收材料清单
 
-| 手段 | 价值 |
-|------|------|
-| **变异测试** | 针对已锁定规则做小范围源码/配置变异，检验测试是否真能杀死缺陷，尤其适合 BR-Notify / CLI TODO 补缺之后。 |
-| **流量回放** | 抓取真实 RPC/HTTP 报文离线重放，提高 FR-Dispatch、HTTP 头等路径覆盖而不依赖手工拼包。 |
-| **差分测试** | 双版本框架或双配置对比输出，捕获重构带来的隐性行为漂移。 |
-| **属性 / 模糊测试** | 对 URI、超时、大包边界做自动生成输入，补强 FR-Net / FR-CfgCli 边角。 |
 
----
+| 类别          | 材料                                                                                                                      |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 规则与追溯       | `[docs/business_rules_v2.md](docs/business_rules_v2.md)`（56 条规则 + Part G 覆盖度矩阵 ≈92% / BR ≈59.1%）                        |
+| 测试剧本        | `[docs/test_scenarios_v2.md](docs/test_scenarios_v2.md)`（≥30 场景，映射规则 ID）                                                |
+| 自动化代码       | `[tests/integration_test.py](tests/integration_test.py)`、`[tests/integration_test_v2.py](tests/integration_test_v2.py)` |
+| 可复现环境       | `[scripts/rebuild_phxrpc.sh](scripts/rebuild_phxrpc.sh)`                                                                |
+| 提示词 / 方法论   | `[prompts/task.md](prompts/task.md)`                                                                                    |
+| 覆盖率指标（黑盒摘要） | v2 测试打印 **~24/56** 规则；规格侧加权 **≈92.0% 总体 / 框架侧 100% / BR ≈59.1%**                                                        |
+| 源代码基线       | `phxrpc/`（分析提交见 `business_rules_v2.md` Metadata）                                                                        |
 
-## 10. 验收材料清单
-
-| 类别 | 材料 |
-|------|------|
-| 规则与追溯 | [`docs/business_rules_v2.md`](docs/business_rules_v2.md)（56 条规则 + Part G 覆盖度矩阵 ≈92% / BR ≈59.1%） |
-| 测试剧本 | [`docs/test_scenarios_v2.md`](docs/test_scenarios_v2.md)（≥30 场景，映射规则 ID） |
-| 自动化代码 | [`tests/integration_test.py`](tests/integration_test.py)、[`tests/integration_test_v2.py`](tests/integration_test_v2.py) |
-| 可复现环境 | [`scripts/rebuild_phxrpc.sh`](scripts/rebuild_phxrpc.sh) |
-| 提示词 / 方法论 | [`prompts/task.md`](prompts/task.md) |
-| 覆盖率指标（黑盒摘要） | v2 测试打印 **~24/56** 规则；规格侧加权 **≈92.0% 总体 / 框架侧 100% / BR ≈59.1%** |
-| 源代码基线 | `phxrpc/`（分析提交见 `business_rules_v2.md` Metadata） |
 
 ---
 
 ## 附录：参考链接
 
-- PhxRPC 上游：https://github.com/Tencent/phxrpc
+- PhxRPC 上游：[https://github.com/Tencent/phxrpc](https://github.com/Tencent/phxrpc)
+

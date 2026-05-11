@@ -22,6 +22,44 @@ Python deps: stdlib only (http.client for HTTP). Optional: pip install requests 
 Echo payloads: ASCII-only for subprocess argv safety on C locale.
 """
 
+# -----------------------------------------------------------------------------
+# 测试方法 ↔ 场景 ID 快速映射（与 docs/test_scenarios_v2.md「对应测试方法」列互链）
+# 格式:  qualified_name  →  TS-xx[, TS-yy ...]
+#
+#   TestPhxRPCRulesV2::test_pr_tcp_server_reachable
+#       → TS-35
+#   TestPhxRPCRulesV2::test_fr_dispatch_http_unknown_uri_404
+#       → TS-02, TS-03
+#   TestPhxRPCRulesV2::test_br_echo_01_roundtrip
+#       → TS-01, TS-15, TS-22, TS-25, TS-30
+#   TestPhxRPCRulesV2::test_br_search_02_demo_strings
+#       → TS-20, TS-27
+#   TestPhxRPCRulesV2::test_br_search_01_query_ignored_same_output
+#       → TS-26
+#   TestPhxRPCRulesV2::test_br_search_03_no_extra_site_fields
+#       → TS-28
+#   TestPhxRPCRulesV2::test_br_notify_01_future_success_remove_decorator
+#       → TS-29 (@unittest.expectedFailure)
+#   TestPhxRPCRulesV2::test_br_notify_current_returns_negative_one
+#       → TS-06, TS-18, TS-29
+#   TestPhxRPCRulesV2::test_fr_cfg_connect_refused
+#       → TS-09, TS-13
+#   TestPhxRPCRulesV2::test_fr_cfg_multi_endpoint_file
+#       → TS-08, TS-10, TS-23
+#   TestPhxRPCRulesV2::test_fr_net_invalid_listen_ip_rejected
+#       → TS-14
+#   TestPhxRPCRulesV2::test_fr_http_layer_accepts_post
+#       → TS-19
+#   TestPhxRPCRulesV2::test_fr_caller_normal_closed_skipped
+#       → TS-07 (@unittest.skip；TS-05 无重试断言未单测)
+#   TestPhxRPCRulesV2::test_fr_svc_pb_errors_skipped
+#       → TS-16, TS-17 (@unittest.skip)
+#   TestPhxRPCRulesV2::test_fr_hsha_queue_drop_placeholder
+#       → TS-12 (@unittest.skipUnless ENABLE_HSHA_STRESS=1)
+#   TestRuleCoverageReport::test_print_coverage_summary
+#       → TS-34（元：覆盖度摘要输出）
+# -----------------------------------------------------------------------------
+
 from __future__ import print_function
 
 import http.client
@@ -218,13 +256,19 @@ class TestPhxRPCRulesV2(unittest.TestCase):
 
     # --- PR / TCP ---
     def test_pr_tcp_server_reachable(self):
-        """TS implicit / PR-Svr — smoke TCP to configured port."""
+        """对应场景: TS-35; 关联规则: PR-Svr-01（隐式端口可达）, FR-Net-03（连接成功路径子集）.
+
+        TCP 冒烟：与 setUpClass 一致，显式保留为独立用例便于剧本文档引用。
+        """
         s = socket.create_connection((self.host, self.port), timeout=3)
         s.close()
 
     # --- FR-Dispatch HTTP ---
     def test_fr_dispatch_http_unknown_uri_404(self):
-        """TS-02/03 — FR-Dispatch-03/04: unknown URI → HTTP 404 Not Found."""
+        """对应场景: TS-02, TS-03; 关联规则: FR-Dispatch-02, FR-Dispatch-03, FR-Dispatch-04.
+
+        未注册 URI → HTTP 404；Result 头缺失或非正与客户端 -1 语义一致。
+        """
         status, hdrs = http_post_status_headers(self.host, self.port, "/search/NoSuchMethod", b"")
         self.assertEqual(status, 404, msg="Expected 404 for unregistered URI")
         # negative or missing result header still maps to -1 in client (see http_msg.cpp)
@@ -233,7 +277,10 @@ class TestPhxRPCRulesV2(unittest.TestCase):
 
     # --- BR-Echo / FR successful path ---
     def test_br_echo_01_roundtrip(self):
-        """TS-25 / BR-Echo-01 / FR-Dispatch-01 (implicit success URI)."""
+        """对应场景: TS-01, TS-15, TS-22, TS-25, TS-30; 关联规则: FR-Dispatch-01, FR-Net-03/05, FR-Msg-01/02, BR-Echo-01, BR-Tool-01.
+
+        PHXEcho -s 回显与 return 0；成功路径隐含正确 URI 与 result 字段。
+        """
         payload = "phx-v2-echo"
         proc = run_tool("PHXEcho", ["-s", payload])
         out = _merge_streams(proc)
@@ -242,7 +289,10 @@ class TestPhxRPCRulesV2(unittest.TestCase):
         self.assertEqual(parse_string_value_from_resp(out), payload, msg=out)
 
     def test_br_search_02_demo_strings(self):
-        """TS-27 / BR-Search-02."""
+        """对应场景: TS-20, TS-27; 关联规则: FR-HTTP-02（CLI 成功路径隐式）, BR-Search-02.
+
+        Search 返回固定 demo title/url 子串。
+        """
         proc = run_tool("Search", ["-q", "any"])
         out = _merge_streams(proc)
         self.assertEqual(proc.returncode, 0, msg=out)
@@ -251,7 +301,10 @@ class TestPhxRPCRulesV2(unittest.TestCase):
         self.assertRegex(out, r'url:\s*"https://www\.tencent\.com"')
 
     def test_br_search_01_query_ignored_same_output(self):
-        """TS-26 / BR-Search-01 — two different -q produce same demo fingerprint."""
+        """对应场景: TS-26; 关联规则: BR-Search-01.
+
+        两次不同 -q 输出相同 demo 指纹（query 未参与当前实现）。
+        """
         proc_a = run_tool("Search", ["-q", "aaa"])
         proc_b = run_tool("Search", ["-q", "bbb"])
         out_a = _merge_streams(proc_a)
@@ -263,7 +316,10 @@ class TestPhxRPCRulesV2(unittest.TestCase):
         self.assertIn("Success Reconstruction", out_b)
 
     def test_br_search_03_no_extra_site_fields(self):
-        """TS-28 / BR-Search-03 — current impl omits type/summary in output."""
+        """对应场景: TS-28; 关联规则: BR-Search-03.
+
+        当前实现 DebugString 输出不含 type:/summary: 行。
+        """
         proc = run_tool("Search", ["-q", "x"])
         out = _merge_streams(proc)
         self.assertIn("sites {", out)
@@ -273,9 +329,9 @@ class TestPhxRPCRulesV2(unittest.TestCase):
     # --- BR-Notify ---
     @unittest.expectedFailure
     def test_br_notify_01_future_success_remove_decorator(self):
-        """TS-29 / BR-Notify-01 — expect 0 when implemented; today -1.
+        """对应场景: TS-29; 关联规则: BR-Notify-01.
 
-        Remove @unittest.expectedFailure after Notify returns 0.
+        当前 sample 恒 -1；本用例预置成功态（return 0）。修复业务后移除 @unittest.expectedFailure。
         """
         proc = run_tool("Notify", ["-m", "ping"])
         out = _merge_streams(proc)
@@ -283,14 +339,20 @@ class TestPhxRPCRulesV2(unittest.TestCase):
         self.assertEqual(parse_return_code(out, "Notify"), 0, msg=out)
 
     def test_br_notify_current_returns_negative_one(self):
-        """Document present behaviour (still passes)."""
+        """对应场景: TS-06, TS-18, TS-29; 关联规则: FR-Caller-06, FR-Svc-03, BR-Notify-01.
+
+        记录现状：Notify return -1（与 TS-29 缺口一致）。
+        """
         proc = run_tool("Notify", ["-m", "ping"])
         out = _merge_streams(proc)
         self.assertEqual(parse_return_code(out, "Notify"), -1, msg=out)
 
     # --- FR-CfgCli / FR-Net ---
     def test_fr_cfg_connect_refused(self):
-        """TS-13 / FR-CfgCli-01/02 + FR-Net-01 — unreachable port fails RPC."""
+        """对应场景: TS-09, TS-13; 关联规则: FR-CfgCli-01, FR-CfgCli-02, FR-Net-01.
+
+        临时 conf 指向不可达端口 + 较短超时，RPC Open 失败 → return -1。
+        """
         fd, path = tempfile.mkstemp(prefix="phxrpc_cli_", suffix=".conf")
         os.close(fd)
         try:
@@ -310,7 +372,10 @@ class TestPhxRPCRulesV2(unittest.TestCase):
                 pass
 
     def test_fr_cfg_multi_endpoint_file(self):
-        """TS-08/10/23 — FR-CfgCli-01/03 + PR-Cli — duplicate endpoints still work."""
+        """对应场景: TS-08, TS-10, TS-23; 关联规则: FR-CfgCli-01, FR-CfgCli-03, PR-Cli-01, PR-Cli-02.
+
+        双 [ServerN] 同址同端口，工具仍 exit 0（GetRandom 非空列表）。
+        """
         fd, path = tempfile.mkstemp(prefix="phxrpc_cli_", suffix=".conf")
         os.close(fd)
         try:
@@ -332,7 +397,10 @@ class TestPhxRPCRulesV2(unittest.TestCase):
                 pass
 
     def test_fr_net_invalid_listen_ip_rejected(self):
-        """TS-14 / FR-Net-02 — invalid dotted-quad fails fast."""
+        """对应场景: TS-14; 关联规则: FR-Net-02.
+
+        非法点分 IPv4，连接路径失败 → return -1。
+        """
         fd, path = tempfile.mkstemp(prefix="phxrpc_cli_", suffix=".conf")
         os.close(fd)
         try:
@@ -353,7 +421,10 @@ class TestPhxRPCRulesV2(unittest.TestCase):
 
     # --- FR-HTTP ---
     def test_fr_http_layer_accepts_post(self):
-        """TS-19 / FR-HTTP-01 — minimal POST hits server HTTP stack."""
+        """对应场景: TS-19; 关联规则: FR-HTTP-01.
+
+        最小 POST 进入 HTTP 栈并返回可解析状态/头。
+        """
         status, hdrs = http_post_status_headers(self.host, self.port, "/search/Search", b"")
         self.assertLess(status, 600)
         # RFC: layer processed; business code may set X-PHXRPC-Result
@@ -362,15 +433,26 @@ class TestPhxRPCRulesV2(unittest.TestCase):
     # --- Documented skips ---
     @unittest.skip("FR-Caller-07 / TS-07 — needs scripted half-close or harness")
     def test_fr_caller_normal_closed_skipped(self):
+        """对应场景: TS-07; 关联规则: FR-Caller-09.
+
+        跳过原因：需构造 Normal_Closed 与半关闭，见 test_scenarios_v2.md TS-07。（TS-05 无重试循环未单独黑盒实现。）
+        """
         pass
 
     @unittest.skip("FR-Svc-01/02 / TS-16/17 — malformed protobuf body not portable black-box")
     def test_fr_svc_pb_errors_skipped(self):
+        """对应场景: TS-16, TS-17; 关联规则: FR-Svc-01, FR-Svc-02.
+
+        跳过原因：畸形 Protobuf body 黑盒难构造、跨实现不便携。
+        """
         pass
 
     @unittest.skipUnless(os.environ.get("ENABLE_HSHA_STRESS") == "1", "FR-Hsha-02 / TS-12 — unstable; enable ENABLE_HSHA_STRESS=1")
     def test_fr_hsha_queue_drop_placeholder(self):
-        """Placeholder for queue-wait drop experiment."""
+        """对应场景: TS-12; 关联规则: FR-Hsha-02.
+
+        默认关闭：队列等待丢弃实验不稳定；设 ENABLE_HSHA_STRESS=1 后需单独实现负载。
+        """
         self.fail("Implement workload generator separately")
 
 
@@ -378,6 +460,10 @@ class TestRuleCoverageReport(unittest.TestCase):
     """Meta: prints coverage summary when run with verbosity."""
 
     def test_print_coverage_summary(self):
+        """对应场景: TS-34; 关联规则: （元信息，无单条 FR/BR）.
+
+        运行结束时打印黑盒规则覆盖摘要，便于与 business_rules_v2 对照。
+        """
         summary = (
             "\n=== Rule coverage (black-box automation) ===\n"
             "Estimated rules directly exercised: ~24 / 56\n"
