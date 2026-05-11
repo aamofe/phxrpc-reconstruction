@@ -1,6 +1,6 @@
-# PhxRPC — Business / Framework Rules Document (BRD/FRD v2)
+# PhxRPC — 业务/框架规则规格文档（BRD/FRD v2）
 
-| Metadata | Value |
+| 元数据（Metadata） | 值（Value） |
 |----------|--------|
 | Project | PhxRPC (Tencent open-source RPC framework, C++) |
 | Repository | https://github.com/Tencent/phxrpc |
@@ -8,30 +8,30 @@
 | Git commit (analyzed tree) | `58318ef02854f7aea02cae67e53b00fd8acc8e15` |
 | Scope | Framework core `phxrpc/`, sample `sample/`, codegen `codegen/`, build `phxrpc/Makefile` |
 
-**Symbol convention**
+**符号约定（Symbol convention）**
 
-| Prefix | Meaning |
+| 前缀（Prefix） | 含义（Meaning） |
 |--------|---------|
-| FR-xxx | Framework rule (runtime behaviour of `libphxrpc.a`) |
-| BR-xxx | Business rule (sample Search service behaviour) |
-| PR-xxx | Profile / configuration rule (INI-style configs) |
-| CG-xxx | Code generator rule (`codegen/phxrpc_pb2*`) |
+| FR-xxx | 框架规则（`libphxrpc.a` 的运行时行为） |
+| BR-xxx | 业务规则（sample Search 服务行为） |
+| PR-xxx | 配置规则（INI 风格 configs） |
+| CG-xxx | 代码生成器规则（`codegen/phxrpc_pb2*`） |
 
-**Status legend**
+**状态标记（Status legend）**
 
-| Symbol | Meaning |
+| 标记（Symbol） | 含义（Meaning） |
 |--------|---------|
-| ✅ | Implemented in source as stated |
-| ⚠️ | Partially implemented / intentionally incomplete (sample) |
-| ❌ | Not implemented / stub |
+| ✅ | 按文档描述在源码中已实现 |
+| ⚠️ | 部分实现 / sample 侧刻意不完整 |
+| ❌ | 未实现 / 占位实现 |
 
 ---
 
-## Part A — Project structure & build (step 1)
+## Part A — 项目结构与构建（step 1）
 
-### A.1 Framework sources grouped by role
+### A.1 框架源码按职责分组
 
-| Group | Representative paths (`phxrpc/` unless noted) |
+| 分组（Group） | 代表性路径（Representative paths，除非特别说明默认在 `phxrpc/` 下） |
 |-------|-----------------------------------------------|
 | RPC runtime | `rpc/caller.cpp`, `rpc/hsha_server.cpp`, `rpc/server_config.cpp`, `rpc/client_config.cpp`, `rpc/socket_stream_phxrpc.cpp`, `rpc/client_monitor.cpp`, `rpc/server_monitor.cpp`, `rpc/monitor_factory.cpp`, `rpc/phxrpc.pb.cc` |
 | Message / dispatch | `msg/base_msg.{h,cpp}`, `msg/base_msg_handler.{h,cpp}`, `msg/base_dispatcher.h`, `msg/base_msg_handler_factory.{h,cpp}` |
@@ -40,60 +40,60 @@
 | File / config / CLI opt | `file/config.{h,cpp}`, `file/opt_map.{h,cpp}`, `file/log_utils.{h,cpp}`, `file/file_utils.{h,cpp}` |
 | Comm | `comm/assert.{h,cpp}` |
 
-**Note:** There is **no** `rpc_channel.h` or `thread_pool.h` in this tree; timeouts are applied via `ClientConfig` + socket streams; concurrency uses `WorkerPool` / `ThdQueue` / uthread scheduler (`phxrpc/rpc/hsha_server.cpp`, `phxrpc/rpc/thread_queue.h`, `phxrpc/network/uthread_epoll.*`).
+**说明：** 当前代码树中 **不存在** `rpc_channel.h` 或 `thread_pool.h`；超时通过 `ClientConfig` + socket stream 体系生效；并发主要依赖 `WorkerPool` / `ThdQueue` / uthread 调度器（`phxrpc/rpc/hsha_server.cpp`, `phxrpc/rpc/thread_queue.h`, `phxrpc/network/uthread_epoll.*`）。
 
-### A.2 `libphxrpc.a` composition
+### A.2 `libphxrpc.a` 组成
 
-Evidence: `phxrpc/Makefile` bundles `LIB_RPC_OBJS`, `LIB_MSG_OBJS`, `LIB_HTTP_OBJS`, `LIB_NETWORK_OBJS`, `LIB_FILE_OBJS`, `LIB_COMM_OBJS` into `libphxrpc.a` (`phxrpc/Makefile` **L29–L38**).
+证据：`phxrpc/Makefile` 将 `LIB_RPC_OBJS`, `LIB_MSG_OBJS`, `LIB_HTTP_OBJS`, `LIB_NETWORK_OBJS`, `LIB_FILE_OBJS`, `LIB_COMM_OBJS` 打包为 `libphxrpc.a`（`phxrpc/Makefile` **L29–L38**）。
 
-### A.3 Sample artefacts
+### A.3 sample 产物与文件
 
-| Artefact | Role |
+| 产物（Artefact） | 角色（Role） |
 |----------|------|
-| `sample/search.proto` | Service & messages |
-| `sample/phxrpc_search_*.{h,cpp}` | Generated stub / dispatcher / service base / tool |
-| `sample/search_service_impl.cpp` | User business |
-| `sample/search_main.cpp` | Server entry + dispatch wiring |
-| `sample/search_client.{h,cpp}` | Generated blocking client |
-| `sample/search_tool_*` | CLI |
+| `sample/search.proto` | 服务定义与消息（Service & messages） |
+| `sample/phxrpc_search_*.{h,cpp}` | 生成代码：stub / dispatcher / service base / tool |
+| `sample/search_service_impl.cpp` | 用户业务实现 |
+| `sample/search_main.cpp` | 服务入口与分发 wiring |
+| `sample/search_client.{h,cpp}` | 生成的 blocking client |
+| `sample/search_tool_*` | CLI 工具 |
 | `sample/search_* .conf` | Client/server profile |
 
 ---
 
-## Part B — Proto contracts & extensions (step 2)
+## Part B — Proto 契约与扩展（step 2）
 
 ### B.1 `phxrpc/rpc/phxrpc.proto`
 
-Extensions on `google.protobuf.MethodOptions` (`phxrpc/rpc/phxrpc.proto` **L8–L12**):
+`google.protobuf.MethodOptions` 上的扩展定义（`phxrpc/rpc/phxrpc.proto` **L8–L12**）：
 
-| Extension | Field number |
+| 扩展项（Extension） | 字段号（Field number） |
 |-----------|----------------|
 | `CmdID` | 2000000 |
 | `OptString` | 2000001 |
 | `Usage` | 2000002 |
 
-### B.2 `sample/search.proto` (service surface)
+### B.2 `sample/search.proto`（服务面）
 
 | RPC | Request | Response | CmdID / CLI hints (proto options) |
 |-----|---------|----------|-----------------------------------|
 | `Search` | `SearchRequest` | `SearchResult` | CmdID=1, OptString=`q:`, Usage=`-q <query>` (`sample/search.proto` **L35–L38**) |
 | `Notify` | `google.protobuf.StringValue` | `google.protobuf.Empty` | CmdID=2, OptString=`m:`, Usage=`-m <msg>` (`sample/search.proto` **L41–L44**) |
 
-Messages: `Site`, `SiteType`, `SearchRequest`, `SearchResult` (`sample/search.proto` **L11–L31**).
+消息定义：`Site`, `SiteType`, `SearchRequest`, `SearchResult`（`sample/search.proto` **L11–L31**）。
 
-### B.3 URI mapping (generated stub & dispatcher)
+### B.3 URI 映射（生成的 stub 与 dispatcher）
 
-| Mechanism | Evidence |
+| 机制（Mechanism） | 证据（Evidence） |
 |-----------|----------|
 | Stub calls `caller.set_uri("/<PackageName>/<Method>", CmdID)` | Codegen emits pattern `caller.set_uri("/%s/%s", …)` (`codegen/client_code_render.cpp` **L198**) |
 | Dispatcher registers same path string | Example `"/search/Search"` (`sample/phxrpc_search_dispatcher.cpp` **L28–L31**) |
 | Stub stores CmdID for monitor when `cmd_id > 0` | `Caller::MonitorReport` (`phxrpc/rpc/caller.cpp` **L69–L71**) |
 
-**CG-URI-01** ✅ Namespaced HTTP path `/<package>/<Method>` must match between stub and dispatcher — **generator + sample** (`codegen/client_code_render.cpp` **L198**; `sample/phxrpc_search_dispatcher.cpp` **L28–L31**).
+**CG-URI-01** ✅ 命名空间 HTTP 路径 `/<package>/<Method>` 必须在 stub 与 dispatcher 间保持一致 —— **generator + sample**（`codegen/client_code_render.cpp` **L198**; `sample/phxrpc_search_dispatcher.cpp` **L28–L31**）。
 
 ---
 
-## Part C — Framework rules (FR) with traceability (step 3)
+## Part C — 框架规则（FR）与追溯证据（step 3）
 
 ### C.1 Dispatcher (`phxrpc/msg/base_dispatcher.h`)
 
@@ -184,7 +184,7 @@ Messages: `Site`, `SiteType`, `SearchRequest`, `SearchResult` (`sample/search.pr
 
 ---
 
-## Part D — Business rules (BR) — sample Search (step 4)
+## Part D — 业务规则（BR）— sample Search（step 4）
 
 | ID | Rule | Evidence | Status |
 |----|------|----------|--------|
@@ -202,7 +202,7 @@ Messages: `Site`, `SiteType`, `SearchRequest`, `SearchResult` (`sample/search.pr
 
 ---
 
-## Part E — Profile rules (PR)
+## Part E — 配置规则（PR）
 
 | ID | Rule | Evidence | Status |
 |----|------|----------|--------|
@@ -214,7 +214,7 @@ Messages: `Site`, `SiteType`, `SearchRequest`, `SearchResult` (`sample/search.pr
 
 ---
 
-## Part F — Code generator rules (CG)
+## Part F — 代码生成器规则（CG）
 
 | ID | Rule | Evidence | Status |
 |----|------|----------|--------|
@@ -224,7 +224,7 @@ Messages: `Site`, `SiteType`, `SearchRequest`, `SearchResult` (`sample/search.pr
 
 ---
 
-## Part G — Coverage matrix (quantified, step 5)
+## Part G — 覆盖度矩阵（量化，step 5）
 
 Counts per **implementation status** against rules listed above (FR **37**, BR **11**, PR **5**, CG **3** → **56** rules total).
 
@@ -258,11 +258,11 @@ Counts per **implementation status** against rules listed above (FR **37**, BR *
 
 ¹ Same ⚠️ half-weight as section G.1.
 
-**Interpretation:** Framework-side rules are fully backed by `libphxrpc.a` sources. Lower BR score is from **intentional sample stubs** (`Notify`, CLI TODOs, demo `Search`).
+**解读：** 框架侧规则均可在 `libphxrpc.a` 对应源码中找到直接证据支撑；BR 覆盖率偏低主要来自 **sample 的刻意占位/未实现**（如 `Notify`、CLI TODO、demo `Search`）。
 
 ---
 
-## Part H — Gap priority (step 5 closing)
+## Part H — 缺口优先级（step 5 收尾）
 
 | Priority | Item | Rules |
 |----------|------|-------|
@@ -273,7 +273,7 @@ Counts per **implementation status** against rules listed above (FR **37**, BR *
 
 ---
 
-## Part I — Verification plan hooks (step 6)
+## Part I — 验证计划挂钩（step 6）
 
 | Rule ID | Suggested verification | Existing automation |
 |---------|------------------------|---------------------|
@@ -287,7 +287,7 @@ Counts per **implementation status** against rules listed above (FR **37**, BR *
 
 ---
 
-## Appendix — File index (quick navigation)
+## 附录 — 文件索引（快速导航）
 
 | Path | Role |
 |------|------|
@@ -303,4 +303,4 @@ Counts per **implementation status** against rules listed above (FR **37**, BR *
 | `codegen/client_code_render.cpp` | Stub URI emission |
 | `phxrpc/Makefile` | `libphxrpc.a` membership |
 
-*Line numbers refer to commit `58318ef02854f7aea02cae67e53b00fd8acc8e15`; if your branch diverges, use function names above to re-locate.*
+*行号引用基于 commit `58318ef02854f7aea02cae67e53b00fd8acc8e15`；如果你的分支有偏移，请用上方的函数名/文件名重新定位。*

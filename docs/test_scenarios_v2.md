@@ -1,16 +1,16 @@
-# PhxRPC — Test Scenarios (mapped to `docs/business_rules_v2.md`)
+# PhxRPC — 测试剧本（映射到 `docs/business_rules_v2.md`）
 
 
-| Metadata        | Value                                                 |
+| 元数据（Metadata） | 值（Value）                                             |
 | --------------- | ----------------------------------------------------- |
-| Related BRD/FRD | `docs/business_rules_v2.md`                           |
-| Sample root     | `phxrpc/sample/` (tests are under repo root `tests/`) |
+| 关联 BRD/FRD     | `docs/business_rules_v2.md`                           |
+| Sample root     | `phxrpc/sample/`（测试代码位于仓库根目录 `tests/`）              |
 
 
-**Legend — implementation column**
+**说明 — 实现方式（implementation）列**
 
 
-| Value  | Meaning                                                      |
+| 取值（Value） | 含义（Meaning）                                                |
 | ------ | ------------------------------------------------------------ |
 | CLI    | `search_tool_main` via `subprocess`                          |
 | HTTP   | `http.client` (stdlib) against `search_main`                 |
@@ -20,7 +20,7 @@
 | STATIC | verification by codegen / inspection only (CG-*)             |
 
 
-**Legend — 对应测试方法列**
+**说明 — “对应测试方法”列**
 
 
 | 取值                                                             | 含义                                            |
@@ -33,7 +33,7 @@
 
 ---
 
-## Scenario table (≥30)
+## 场景表（≥30）
 
 
 | 场景ID  | 关联规则ID                          | 测试目标                                   | 前置条件                        | 输入/操作                                    | 预期结果                                             | 实现方式                        | 对应测试方法                                                                                                                                                                                |

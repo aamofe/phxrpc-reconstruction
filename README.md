@@ -57,7 +57,7 @@ bash scripts/rebuild_phxrpc.sh
 
 脚本将：创建或启动 `wwsearch_env`、按需安装依赖、编译 Protobuf / 框架 / codegen、重新生成并注入 sample 逻辑、编译 sample，并在后台启动 `search_main`。
 
-### 第二步：进入容器
+### 第二步：
 
 ```bash
 sudo docker exec -it wwsearch_env bash
@@ -70,6 +70,15 @@ sudo docker exec -it wwsearch_env bash
 ```bash
 python3 tests/integration_test.py
 python3 tests/integration_test_v2.py
+```
+
+### 或者直接集成测试
+```bash
+# 运行第一个测试
+sudo docker exec wwsearch_env bash -c "cd /work && python3 tests/integration_test.py"
+
+# 运行第二个测试
+sudo docker exec wwsearch_env bash -c "cd /work && python3 tests/integration_test_v2.py"
 ```
 
 如需详细用例名，可加 `-v`（若脚本支持）。
@@ -221,8 +230,6 @@ OK (skipped=3, expected failures=1)
 
 1. 部分框架规则没能用黑盒方式验证。
 2. 代码生成器（CG类规则）没有自动化测试。
-
-
 
 **高ROI的补充和替代思路**  
 目前采用的主要是：传统的静态分析+和黑盒集成测试。但仍有更优的方式，主要是以下几个方向：
